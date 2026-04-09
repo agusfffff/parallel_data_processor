@@ -1,13 +1,16 @@
 mod chunk;
 mod engine;
-mod line_parser;
+mod errors;
 mod partial_result;
 mod processor;
+mod line_parser; 
+mod aggregator;
+use crate::engine::Engine;
+use crate::errors::Error;
 
-use engine::Engine;
-
-fn main() {
-    let engine = Engine::from_args();
-    let result = engine.run();
+fn main() -> Result<(), Error> {
+    let engine = Engine::from_env()?;
+    let result = engine.run()?;
     println!("{:?}", result);
+    Ok(())
 }

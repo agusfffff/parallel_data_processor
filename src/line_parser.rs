@@ -14,30 +14,35 @@ impl<'a> LineParser<'a> {
     }
 
     /// Returns the year field.
-    pub fn year(&self) -> Option<u16> { parse_u16(self.fields[5]) }
+    pub fn year(&self) -> Option<u16> {
+        parse_u16(self.fields[5])
+    }
 
     /// Returns the month field.
-    pub fn month(&self) -> Option<u8> { parse_u8(self.fields[6]) }
+    pub fn month(&self) -> Option<u8> {
+        parse_u8(self.fields[6])
+    }
 
     /// Returns the day field.
-    pub fn day(&self) -> Option<u8> { parse_u8(self.fields[7]) }
+    pub fn day(&self) -> Option<u8> {
+        parse_u8(self.fields[7])
+    }
 
     /// Returns the latitude field.
-    pub fn lat(&self) -> Option<f64> { parse_f64(self.fields[1]) }
+    pub fn lat(&self) -> Option<f64> {
+        parse_f64(self.fields[1])
+    }
 
     /// Returns the longitude field.
-    pub fn lon(&self) -> Option<f64> { parse_f64(self.fields[2]) }
+    pub fn lon(&self) -> Option<f64> {
+        parse_f64(self.fields[2])
+    }
 
     /// Returns the NO2 column value.
-    pub fn no2(&self) -> Option<f64> { parse_f64(self.fields[3]) }
-
-    /// Returns the quality flag.
-    pub fn quality(&self) -> Option<f64> { parse_f64(self.fields[4]) }
-
-    /// Returns true if the quality flag is above 0.5.
-    pub fn is_valid_quality(&self) -> bool {
-        self.quality().map_or(false, |q| q > 0.5)
+    pub fn no2(&self) -> Option<f64> {
+        parse_f64(self.fields[3])
     }
+
 }
 
 fn parse_f64(bytes: &[u8]) -> Option<f64> {
