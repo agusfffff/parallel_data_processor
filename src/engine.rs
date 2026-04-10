@@ -1,14 +1,16 @@
+use std::io::BufReader;
 use std::{env, fs::File, path::PathBuf, thread::available_parallelism};
 
 use rayon::ThreadPoolBuilder;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::aggregator::{Aggregator, FinalResult};
+use crate::errors::ProcessorError;
+use crate::processor::process_chunk;
 use crate::{
     chunk::divide_chunks,
     errors::{EngineError},
     partial_result::PartialResult,
-    processor::Processor,
 };
 
 /// Orchestrates the parallel processing of the dataset.
@@ -18,9 +20,6 @@ pub struct Engine {
 }
 
 impl Engine {
-    pub fn new(path: PathBuf, workers: usize) -> Self {
-        Self { path, workers }
-    }
 
     pub fn from_env() -> Result<Self, EngineError> {
         dotenv::dotenv().ok(); // Load .env file if it exists
@@ -45,10 +44,14 @@ impl Engine {
     pub fn run(&self) -> Result<FinalResult, EngineError> {
         let mut file = File::open(&self.path).map_err(EngineError::from)?;
         let chunks = divide_chunks(&mut file, self.workers)?;
-
+        let path = self.path.clone();
         let results = chunks
             .into_par_iter()
-            .map(|chunk| Processor::new(&self.path, chunk).process_chunk())
+            .map(|chunk| { 
+                let file = File::open(&path).map_err(ProcessorError::from)?;
+                let mut reader = BufReader::new(file);            
+                process_chunk(&mut reader, chunk)
+            })
             .try_reduce(PartialResult::new, |a, b| Ok(a.merge(b)))
             .map_err(EngineError::from)?; 
         

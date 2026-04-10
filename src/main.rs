@@ -5,6 +5,7 @@ mod partial_result;
 mod processor;
 mod line_parser; 
 mod aggregator;
+mod accumulator;
 use crate::engine::Engine;
 use crate::errors::Error;
 

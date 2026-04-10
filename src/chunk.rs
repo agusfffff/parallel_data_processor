@@ -4,6 +4,7 @@ use crate::errors::ChunkError;
 
 /// Represents a byte range [start, end) within a file
 /// that a worker will process.
+#[derive(Clone)]
 pub struct Chunk {
     pub start: u64,
     pub end: u64,
@@ -19,6 +20,13 @@ pub fn divide_chunks<R: Read + Seek>(reader: &mut R, n: usize) -> Result<Vec<Chu
     }
 
     let file_size = reader.seek(SeekFrom::End(0)).map_err(ChunkError::Io)?;
+    
+    if n as u64 > file_size {
+        return Err(ChunkError::InvalidChunkCount(
+            "number of chunks must be less than or equal to file size".into(),
+        ));
+    }
+
     let chunk_size = file_size / n as u64;
     let mut chunks = Vec::with_capacity(n);
     let mut start = 0u64;
@@ -33,22 +41,8 @@ pub fn divide_chunks<R: Read + Seek>(reader: &mut R, n: usize) -> Result<Vec<Chu
         }
 
         let approx_end = start + chunk_size;
-        reader
-            .seek(SeekFrom::Start(approx_end))
-            .map_err(ChunkError::Io)?;
-
-        let mut buf = [0u8; 1];
-        let mut end = approx_end;
-        loop {
-            reader.read_exact(&mut buf).map_err(ChunkError::Io)?;
-            end += 1;
-            if buf[0] == b'\n' {
-                break;
-            }
-        }
-
-        chunks.push(Chunk { start, end });
-        start = end;
+        chunks.push(Chunk { start, end: approx_end });
+        start = approx_end;
     }
 
     Ok(chunks)
@@ -114,16 +108,4 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_chunks_end_on_newline() -> Result<(), Box<dyn Error>> {
-        let content = b"header\nline1\nline2\nline3\nline4\n";
-        let mut cursor = make_cursor(content);
-        let chunks = divide_chunks(&mut cursor, 2)?;
-
-        for chunk in chunks.iter().take(chunks.len().saturating_sub(1)) {
-            assert_eq!(content[chunk.end as usize - 1], b'\n');
-        }
-
-        Ok(())
-    }
 }
