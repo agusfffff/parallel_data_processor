@@ -1,29 +1,6 @@
 use std::collections::HashMap;
 
-/// Accumulates sum and count for computing averages incrementally.
-#[derive(Debug)]
-pub struct Accumulator {
-    pub sum: f64,
-    pub count: u64,
-}
-
-impl Accumulator {
-    /// Creates a new Accumulator with the given value.
-    pub fn new(value: f64) -> Self {
-        Self { sum: value, count: 1 }
-    }
-
-    /// Merges another Accumulator into this one.
-    pub fn merge(&mut self, other: &Accumulator) {
-        self.sum += other.sum;
-        self.count += other.count;
-    }
-
-    /// Computes the average.
-    pub fn average(&self) -> f64 {
-        self.sum / self.count as f64
-    }
-}
+use crate::accumulator::Accumulator;
 
 /// Holds partial aggregation results from a single chunk.
 #[derive(Debug)]
@@ -46,10 +23,10 @@ impl PartialResult {
     /// Merges another PartialResult into this one.
     pub fn merge(mut self, other: PartialResult) -> Self {
         for (key, acc) in other.t1 {
-            self.t1.entry(key).or_insert(Accumulator { sum: 0.0, count: 0 }).merge(&acc);
+            self.t1.entry(key).or_insert(Accumulator::new()).merge(&acc);
         }
         for (key, acc) in other.t2 {
-            self.t2.entry(key).or_insert(Accumulator { sum: 0.0, count: 0 }).merge(&acc);
+            self.t2.entry(key).or_insert(Accumulator::new()).merge(&acc);
         }
         self
     }

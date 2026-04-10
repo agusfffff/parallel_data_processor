@@ -1,5 +1,5 @@
 use crate::errors::{ChunkError, ProcessorError};
-use std::fmt;
+use std::{fmt, io};
 
 #[derive(Debug)]
 pub enum EngineError {

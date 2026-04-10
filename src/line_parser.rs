@@ -56,3 +56,69 @@ fn parse_u16(bytes: &[u8]) -> Option<u16> {
 fn parse_u8(bytes: &[u8]) -> Option<u8> {
     std::str::from_utf8(bytes).ok()?.trim().parse().ok()
 }
+
+
+#[cfg(test)] 
+mod tests {    
+    use super::*;
+
+    #[test]
+    fn test_line_parser_valid_line() {
+        // lat=1, lon=2, no2=10, year=2024, month=1, day=1
+        let line = b"x,1,2,10,ignored,2024,1,1,extra";
+
+        let parser = LineParser::new(line).unwrap();
+
+        assert_eq!(parser.year(), Some(2024));
+        assert_eq!(parser.month(), Some(1));
+        assert_eq!(parser.day(), Some(1));
+
+        assert_eq!(parser.lat(), Some(1.0));
+        assert_eq!(parser.lon(), Some(2.0));
+        assert_eq!(parser.no2(), Some(10.0));
+    }
+
+    #[test]
+    fn test_line_parser_missing_fields() {
+        let line = b"only,three,fields";
+
+        let parser = LineParser::new(line).unwrap();
+
+        // debería devolver None en todo
+        assert!(parser.year().is_none());
+        assert!(parser.month().is_none());
+        assert!(parser.day().is_none());
+        assert!(parser.lat().is_none());
+        assert!(parser.lon().is_none());
+        assert!(parser.no2().is_none());
+    }
+
+    #[test]
+    fn test_line_parser_with_spaces() {
+        let line = b"x, 1 , 2 , 10 ,x, 2024 , 3 , 15 ,x";
+
+        let parser = LineParser::new(line).unwrap();
+
+        assert_eq!(parser.year(), Some(2024));
+        assert_eq!(parser.month(), Some(3));
+        assert_eq!(parser.day(), Some(15));
+
+        assert_eq!(parser.lat(), Some(1.0));
+        assert_eq!(parser.lon(), Some(2.0));
+        assert_eq!(parser.no2(), Some(10.0));
+    }
+
+    #[test]
+    fn test_line_parser_invalid_numbers() {
+        let line = b"x,abc,def,not_a_number,x,2024,1,1,x";
+
+        let parser = LineParser::new(line).unwrap();
+
+        assert!(parser.lat().is_none());
+        assert!(parser.lon().is_none());
+        assert!(parser.no2().is_none());
+
+        assert_eq!(parser.year(), Some(2024));
+    }
+
+}
